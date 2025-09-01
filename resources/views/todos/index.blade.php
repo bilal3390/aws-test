@@ -4,87 +4,220 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .alert-success { background: #d1fae5; color: #065f46; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-warning { background: #fef3c7; color: #92400e; }
+        .alert button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Form */
+        form.add-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        form.add-form input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        form.add-form button {
+            padding: 12px 18px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        form.add-form button:hover {
+            background: #1e40af;
+        }
+
+        /* Todo List */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        li:hover {
+            transform: translateY(-2px);
+        }
+        li span {
+            font-size: 16px;
+        }
+        li span.completed {
+            text-decoration: line-through;
+            color: #6b7280;
+        }
+
+        /* Buttons inside list */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-toggle {
+            background: #6b7280;
+            color: white;
+            margin-right: 10px;
+        }
+        .btn-toggle.done {
+            background: #10b981;
+        }
+        .btn-toggle:hover {
+            opacity: 0.9;
+        }
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #b91c1c;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            form.add-form {
+                flex-direction: column;
+            }
+            form.add-form button {
+                width: 100%;
+            }
+            li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+
     <script>
-        // Auto-dismiss alerts after 4 seconds
+        // Auto dismiss alerts after 4 seconds
         setTimeout(() => {
             document.querySelectorAll('.alert').forEach(el => el.remove());
         }, 4000);
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex justify-center items-start py-10 px-4">
+<body>
+<div class="container">
+    <h1>✨ Todo App</h1>
 
-<div class="w-full max-w-2xl bg-white shadow-lg rounded-2xl p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">✨ Todo App</h1>
-
-    {{-- Success & Error Messages --}}
+    {{-- Flash Messages --}}
     @if(session('success'))
-        <div class="alert flex items-center justify-between mb-4 p-4 bg-green-100 text-green-800 rounded-lg shadow">
+        <div class="alert alert-success">
             <span>{{ session('success') }}</span>
-            <button onclick="this.parentElement.remove()" class="text-green-600 font-bold">×</button>
+            <button onclick="this.parentElement.remove()">×</button>
         </div>
     @endif
-
     @if(session('error'))
-        <div class="alert flex items-center justify-between mb-4 p-4 bg-red-100 text-red-800 rounded-lg shadow">
+        <div class="alert alert-error">
             <span>{{ session('error') }}</span>
-            <button onclick="this.parentElement.remove()" class="text-red-600 font-bold">×</button>
+            <button onclick="this.parentElement.remove()">×</button>
         </div>
     @endif
-
-    {{-- Validation Errors --}}
     @if ($errors->any())
-        <div class="alert mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg shadow">
-            <ul class="list-disc pl-5 space-y-1">
+        <div class="alert alert-warning">
+            <ul style="margin:0; padding-left: 16px;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+            <button onclick="this.parentElement.remove()">×</button>
         </div>
     @endif
 
     {{-- Add Todo --}}
-    <form action="{{ route('todos.store') }}" method="POST" class="flex flex-col sm:flex-row gap-3 mb-6">
+    <form action="{{ route('todos.store') }}" method="POST" class="add-form">
         @csrf
-        <input type="text" name="title" placeholder="Enter todo..."
-               class="flex-1 border rounded-lg p-3 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-               required>
-        <button class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-3 rounded-lg shadow-md transition">
-            Add
-        </button>
+        <input type="text" name="title" placeholder="Enter todo..." required>
+        <button type="submit">Add</button>
     </form>
 
     {{-- Todo List --}}
-    <ul class="space-y-3">
+    <ul>
         @forelse($todos as $todo)
-            <li class="flex flex-col sm:flex-row items-center justify-between bg-gray-50 p-4 rounded-lg shadow hover:shadow-md transition">
-                <div class="flex items-center gap-3">
+            <li>
+                <div style="display:flex; align-items:center;">
                     <form action="{{ route('todos.toggle', $todo->id) }}" method="POST">
                         @csrf
-                        <button class="px-3 py-1 text-sm font-medium rounded-lg transition
-                            {{ $todo->completed ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-400 hover:bg-gray-500 text-white' }}">
+                        <button class="btn btn-toggle {{ $todo->completed ? 'done' : '' }}">
                             {{ $todo->completed ? '✔ Done' : '⏳ Pending' }}
                         </button>
                     </form>
-
-                    <span class="text-lg {{ $todo->completed ? 'line-through text-gray-500' : 'text-gray-800 font-medium' }}">
+                    <span class="{{ $todo->completed ? 'completed' : '' }}">
                         {{ $todo->title }}
                     </span>
                 </div>
 
-                <form action="{{ route('todos.destroy', $todo->id) }}" method="POST" class="mt-3 sm:mt-0">
+                <form action="{{ route('todos.destroy', $todo->id) }}" method="POST">
                     @csrf
                     @method('DELETE')
-                    <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg shadow-md transition text-sm">
-                        🗑 Delete
-                    </button>
+                    <button class="btn btn-delete">🗑 Delete</button>
                 </form>
             </li>
         @empty
-            <p class="text-center text-gray-500">No todos yet. Add one above 👆</p>
+            <p style="text-align:center; color:#6b7280;">No todos yet. Add one above 👆</p>
         @endforelse
     </ul>
 </div>
-
 </body>
 </html>
